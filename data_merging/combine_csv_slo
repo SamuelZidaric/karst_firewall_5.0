@@ -41,13 +41,13 @@ def combine_datasets(folder_path, year):
     combined_df = combined_df.sort_values(by='date time')
 
     # Save to Excel and CSV in the same folder as the input files
-    output_excel = os.path.join(folder_path, f"skocjan_combined_{year}.xlsx")
-    output_csv = os.path.join(folder_path, f"skocjan_combined_{year}.csv")
+    output_excel = os.path.join(folder_path, f"gorizia_aeroporto_combined_{year}.xlsx")
+    #output_csv = os.path.join(folder_path, f"gorizia_aeroporto_combined_{year}.csv")
 
-    combined_df.to_excel(output_excel, index=False)
+    #combined_df.to_excel(output_excel, index=False)
     combined_df.to_csv(output_csv, index=False)
 
     return output_excel, output_csv
 
-folder_path = "C:/Users/samuel/Desktop/ARSO/Skocjan"
+folder_path = "C:/Users/samuel/Desktop/meteo_data/ARPA/gorizia_aeroporto"
 combine_datasets(folder_path, 2024)

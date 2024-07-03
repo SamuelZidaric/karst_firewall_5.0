@@ -1,0 +1,96 @@
+import os
+import glob
+import pandas as pd
+import re
+
+# Function to extract the year from the filename
+def extract_year_from_filename(filename):
+    match = re.search(r'(\d{4})99\.csv', filename)
+    return int(match.group(1)) if match else None
+
+# Function to clean and load a CSV file
+def load_and_clean_csv(file_path, encoding='utf-8'):
+    try:
+        df = pd.read_csv(file_path, delimiter=';', on_bad_lines='skip', encoding=encoding)
+    except UnicodeDecodeError:
+        # Try different encodings if UTF-8 fails
+        for enc in ['latin1', 'ISO-8859-1', 'cp1252']:
+            try:
+                df = pd.read_csv(file_path, delimiter=';', on_bad_lines='skip', encoding=enc)
+                break
+            except UnicodeDecodeError:
+                continue
+    # Remove rows that contain "NOTA BENE", "ora UTC", "ora di Greenwich", or any metadata notes
+    df = df[~df.apply(lambda row: row.astype(str).str.contains('NOTA BENE|ora UTC|ora di Greenwich|pagina generata|ARPA FVG').any(), axis=1)]
+    return df
+
+# Function to process and combine all files in a folder
+def combine_datasets(folder_path, year):
+    # Check if the folder exists
+    if not os.path.exists(folder_path):
+        raise ValueError(f"The folder path '{folder_path}' does not exist.")
+    
+    # Search for files in the specified folder
+    file_paths = glob.glob(os.path.join(folder_path, "*"))
+
+    # Debug print to check file paths
+    print(f"Found {len(file_paths)} files in {folder_path}")
+    for file in file_paths:
+        print(file)
+
+    if not file_paths:
+        raise ValueError("No files found in the specified folder.")
+
+    # Load, clean, and add missing 'year' column to each CSV file
+    all_data_frames = []
+    for file in file_paths:
+        df = load_and_clean_csv(file)
+        if 'year' not in df.columns:
+            year = extract_year_from_filename(file)
+            df['year'] = year
+        all_data_frames.append(df)
+
+    # Remove the last row of each dataframe except for the last one
+    for i, df in enumerate(all_data_frames):
+        if i < len(all_data_frames) - 1:  # if it's not the last dataframe
+            df = df.iloc[:-1]
+        all_data_frames[i] = df
+
+    # Combine all cleaned data frames
+    combined_data = pd.concat(all_data_frames, ignore_index=True)
+
+    # Remove rows where 'year', 'mese', or 'giorno' columns are not numeric
+    combined_data = combined_data[pd.to_numeric(combined_data['year'], errors='coerce').notnull()]
+    combined_data = combined_data[pd.to_numeric(combined_data['mese'], errors='coerce').notnull()]
+    combined_data = combined_data[pd.to_numeric(combined_data['giorno'], errors='coerce').notnull()]
+
+    # Ensure the 'year' and 'date time' columns are correctly formatted
+    combined_data['year'] = combined_data['year'].astype(int)
+    combined_data['mese'] = combined_data['mese'].astype(int)
+    combined_data['giorno'] = combined_data['giorno'].astype(int)
+    combined_data['ora UTC*'] = combined_data['ora UTC*'].astype(str)
+    combined_data['date time'] = pd.to_datetime(
+        combined_data[['year', 'mese', 'giorno']].astype(str).agg('-'.join, axis=1) + ' ' + combined_data['ora UTC*'], 
+        format='%Y-%m-%d %I:%M:%S %p', 
+        errors='coerce'
+    )
+
+    # Reorder columns to match the expected format
+    combined_data = combined_data[[
+        'year', 'mese', 'giorno', 'ora UTC*', 'Temp. gradi C', "Umidita' %", 'Pioggia mm',
+        'Vento med km/h', 'Direzione Vento gradi N', 'Vento max km/h', 'Direzione Vento max gradi N',
+        'Radiaz. KJ/m2', 'Pressione hPa', 'Bagnatura Fogliare min.', 'date time'
+    ]]
+
+    # Export the final combined data to an Excel file
+    final_output_file = os.path.join(folder_path, f"trieste_molo_bandiera_combined_{year}.xlsx")
+    combined_data.to_excel(final_output_file, index=False)
+
+    return final_output_file
+
+# Example usage
+folder_path = "C:/Users/samuel/Desktop/meteo_data/ARPA/trieste_molo_bandiera"
+combined_file = combine_datasets(folder_path, 2024)
+print(f"Combined data saved to: {combined_file}")
+
+
