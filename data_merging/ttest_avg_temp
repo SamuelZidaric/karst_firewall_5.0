@@ -1,0 +1,45 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+from scipy.stats import ttest_ind
+
+# Load the Excel file
+file_path = 'C:/Users/samuel/Desktop/meteo_data/combined_outputs/temp_avg_by_year_and_loc.xlsx'
+data = pd.read_excel(file_path)
+
+# Renaming columns for better clarity
+data.columns = ['weather_station_id', 'name', 'year', 'average_temp']
+
+# Ensure the year column is of integer type and average_temp is float
+data['year'] = data['year'].astype(int)
+data['average_temp'] = data['average_temp'].astype(float)
+
+# Separate the data into two groups: SI (IDs 1 to 12) and IT (IDs 13 to 19)
+it_data = data[data['weather_station_id'].between(13, 19)]
+si_data = data[data['weather_station_id'].between(1, 12)]
+
+# Calculate the yearly average temperatures for each group
+it_yearly_avg = it_data.groupby('year')['average_temp'].mean().reset_index()
+si_yearly_avg = si_data.groupby('year')['average_temp'].mean().reset_index()
+
+# Calculate yearly temperature increases
+si_yearly_increase = si_yearly_avg['average_temp'].diff().dropna()
+it_yearly_increase = it_yearly_avg['average_temp'].diff().dropna()
+
+# Perform t-test
+t_stat, p_value = ttest_ind(si_yearly_increase, it_yearly_increase)
+
+# Print t-test results
+print(f'T-test Results:\nT-statistic: {t_stat:.4f}\nP-value: {p_value:.4f}')
+
+# Interpretation
+if abs(t_stat) < 1.96:
+    print(f'The t-statistic is {t_stat:.4f}, which is within the range of -1.96 to 1.96. The difference in average temperature increases between SI and IT is not statistically significant.')
+else:
+    print(f'The t-statistic is {t_stat:.4f}, which is outside the range of -1.96 to 1.96. The difference in average temperature increases between SI and IT is statistically significant.')
+
+if p_value > 0.05:
+    print(f'The p-value is {p_value:.4f} > 0.05 = no statistically significant difference in the average temperature increases between SI and IT.')
+else:
+    print(f'The p-value is {p_value:.4f} > 0.05 = statistically significant difference in the average temperature increases between SI and IT.')
