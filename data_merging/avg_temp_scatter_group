@@ -4,7 +4,7 @@ import seaborn as sns
 from sklearn.linear_model import LinearRegression
 
 # Load the Excel file
-file_path = 'C:/Users/samuel/Desktop/meteo_data/combined_outputs/temp_avg_by_year_and_loc.xlsx'
+file_path = 'C:/Users/samuel/Desktop/meteo_data/combined_outputs/avg_temp_by_year_and_loc.xlsx'
 data = pd.read_excel(file_path)
 
 # Renaming columns for better clarity

@@ -1,0 +1,45 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+
+# Load the Excel file
+file_path = 'C:/Users/samuel/Desktop/meteo_data/combined_outputs/avg_wind_by_year_and_loc.xlsx'
+data = pd.read_excel(file_path)
+
+# Renaming columns for better clarity
+data.columns = ['weather_station_id', 'name', 'year', 'average_wind']
+
+# Ensure the year column is of integer type and average_wind is float
+data['year'] = data['year'].astype(int)
+data['average_wind'] = data['average_wind'].astype(float)
+
+# Separate the data into two groups: SI (IDs 1 to 12) and IT (IDs 13 to 19)
+it_data = data[data['weather_station_id'].between(13, 19)]
+si_data = data[data['weather_station_id'].between(1, 12)]
+
+# Calculate the yearly average humidities for each group
+it_yearly_avg = it_data.groupby('year')['average_wind'].mean().reset_index()
+si_yearly_avg = si_data.groupby('year')['average_wind'].mean().reset_index()
+
+# Calculate slopes for each group
+si_model = LinearRegression()
+si_model.fit(si_yearly_avg['year'].values.reshape(-1, 1), si_yearly_avg['average_wind'].values)
+si_slope = si_model.coef_[0]
+
+it_model = LinearRegression()
+it_model.fit(it_yearly_avg['year'].values.reshape(-1, 1), it_yearly_avg['average_wind'].values)
+it_slope = it_model.coef_[0]
+
+# Plotting with 'X' markers for yearly averages
+plt.figure(figsize=(12, 6))
+sns.scatterplot(x='year', y='average_wind', data=it_yearly_avg, marker='X', color='red', s=50, label=f'IT with Slope: {it_slope:.4f}')
+sns.scatterplot(x='year', y='average_wind', data=si_yearly_avg, marker='X', color='blue', s=50, label=f'SI with Slope: {si_slope:.4f}')
+sns.regplot(x='year', y='average_wind', data=si_yearly_avg, scatter=False, line_kws={"color": "blue"})
+sns.regplot(x='year', y='average_wind', data=it_yearly_avg, scatter=False, line_kws={"color": "red"})
+plt.xlabel('Year')
+plt.ylabel('Average Wind')
+plt.title('Scatter Plot of Average Wind by Year (IT vs. SI)')
+plt.legend(title='Group')
+plt.grid(True)
+plt.show()

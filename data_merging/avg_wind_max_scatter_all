@@ -1,0 +1,34 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+
+# Load the Excel file
+file_path = 'C:/Users/samuel/Desktop/meteo_data/combined_outputs/avg_wind_max_by_year.xlsx'
+data = pd.read_excel(file_path)
+
+# Renaming columns for better clarity
+data.columns = ['year', 'average_wind_max']
+
+# Ensure the year column is of integer type and average_wind_max is float
+data['year'] = data['year'].astype(int)
+data['average_wind_max'] = data['average_wind_max'].astype(float)
+
+# Fit a linear regression model for the new data
+model = LinearRegression()
+model.fit(data['year'].values.reshape(-1, 1), data['average_wind_max'].values)
+slope = model.coef_[0]
+intercept = model.intercept_
+
+# Calculate the regression line values
+data['regression_line'] = intercept + slope * data['year']
+
+# Plotting with 'X' markers for the new data with regression line
+plt.figure(figsize=(12, 6))
+sns.regplot(x='year', y='average_wind_max', data=data, marker='X', color='blue', scatter_kws={'s':50}, line_kws={'color': 'red'})
+plt.xlabel('Year')
+plt.ylabel('Average Wind Max')
+plt.title('Scatter Plot of Average Wind Max by Year')
+plt.legend(['Regression Line (Slope: {:.4f})'.format(slope), 'Average Wind Max'])
+plt.grid(True)
+plt.show()

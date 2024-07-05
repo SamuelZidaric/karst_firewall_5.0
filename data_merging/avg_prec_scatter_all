@@ -4,19 +4,19 @@ import seaborn as sns
 from sklearn.linear_model import LinearRegression
 
 # Load the Excel file
-file_path = 'C:/Users/samuel/Desktop/meteo_data/combined_outputs/temp_avg_by_year.xlsx'
+file_path = 'C:/Users/samuel/Desktop/meteo_data/combined_outputs/avg_prec_by_year.xlsx'
 data = pd.read_excel(file_path)
 
 # Renaming columns for better clarity
-data.columns = ['year', 'average_temp']
+data.columns = ['year', 'average_prec']
 
 # Ensure the year column is of integer type and average_temp is float
 data['year'] = data['year'].astype(int)
-data['average_temp'] = data['average_temp'].astype(float)
+data['average_prec'] = data['average_prec'].astype(float)
 
 # Fit a linear regression model for the new data
 model = LinearRegression()
-model.fit(data['year'].values.reshape(-1, 1), data['average_temp'].values)
+model.fit(data['year'].values.reshape(-1, 1), data['average_prec'].values)
 slope = model.coef_[0]
 intercept = model.intercept_
 
@@ -25,10 +25,10 @@ data['regression_line'] = intercept + slope * data['year']
 
 # Plotting with 'X' markers for the new data with regression line
 plt.figure(figsize=(12, 6))
-sns.regplot(x='year', y='average_temp', data=data, marker='X', color='blue', scatter_kws={'s':50}, line_kws={'color': 'red'})
+sns.regplot(x='year', y='average_prec', data=data, marker='X', color='blue', scatter_kws={'s':50}, line_kws={'color': 'red'})
 plt.xlabel('Year')
-plt.ylabel('Average Temperature')
-plt.title('Scatter Plot of Average Temperature by Year with Regression Line and Confidence Interval')
-plt.legend(['Regression Line (Slope: {:.4f})'.format(slope), 'Average Temperature'])
+plt.ylabel('Average Precipitations')
+plt.title('Scatter Plot of Average Precipitations by Year')
+plt.legend(['Regression Line (Slope: {:.4f})'.format(slope), 'Average Precipitations'])
 plt.grid(True)
 plt.show()
