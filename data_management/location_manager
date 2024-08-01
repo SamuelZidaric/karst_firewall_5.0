@@ -1,0 +1,83 @@
+import pandas as pd
+from geopy.geocoders import Nominatim
+import time
+from tqdm import tqdm
+
+# Initialize geolocator
+geolocator = Nominatim(user_agent="geoapiExercises")
+
+# Sample data
+with open("addresses.py", "w") as f:
+    # Write the beginning of the list
+    f.write("data = [\n")
+
+        # Add your addresses here
+    addresses = """
+    QUATTRO STRADE, Sagrado, Gorizia
+    S.ANDREA, Gorizia, Gorizia
+    BRESTOVI, Savogna d'Isonzo, Gorizia
+    MONTE BRESTOVI, Savogna d'Isonzo, Gorizia
+    BOSCHETTA, Savogna d'Isonzo, Gorizia
+    VALLE DELLA MORTE, Sagrado, Gorizia
+    SABONARE, Sagrado, Gorizia
+    VALLE DELLA MORTE, Sagrado, Gorizia
+    LA BOSCHETTA, Savogna d'Isonzo, Gorizia
+    MONTE SABOTINO - CIMA SAN VALENTINO, Gorizia, Gorizia
+    BOSCHETTI, Monfalcone, Gorizia
+    CASTELLAZZO, Doberdò del Lago, Gorizia
+    MUCILLE, Ronchi dei Legionari, Gorizia
+    Devetachi, Doberdò del Lago, Gorizia
+    FERROVIA TRA DOBBIA E CORTONA, San Canzian d'Isonzo, Gorizia
+    GOLA GORIZA - MARGINE FERROVIA, Doberdò del Lago, Gorizia
+    PIERIS, Turriaco, Gorizia
+    LIDO DEI CARABINIERI, Grado, Gorizia
+    """
+
+# Convert the multi-line string into a list
+data = [line.strip() for line in addresses.strip().split('\n')]
+
+# Function to get location data
+def get_location_info(location):
+    try:
+        loc = geolocator.geocode(location)
+        if loc:
+            return {
+                "Location": location,
+                "Translated Name": loc.address,
+                "Latitude": loc.latitude,
+                "Longitude": loc.longitude,
+                "Altitude": loc.altitude,  # Altitude not always available from geopy
+                "Additional Info": loc.address
+            }
+        else:
+            return {
+                "Location": location,
+                "Translated Name": "N/A",
+                "Latitude": "N/A",
+                "Longitude": "N/A",
+                "Altitude": "N/A",
+                "Additional Info": "N/A"
+            }
+    except Exception as e:
+        return {
+            "Location": location,
+            "Translated Name": "Error",
+            "Latitude": "Error",
+            "Longitude": "Error",
+            "Altitude": "Error",
+            "Additional Info": str(e)
+        }
+
+# List to hold data
+location_data = []
+
+# Loop through data and get location info
+for place in tqdm(data):
+    location_data.append(get_location_info(place))
+    time.sleep(1)  # Sleep to avoid overwhelming the API
+
+# Create DataFrame
+df = pd.DataFrame(location_data)
+df.to_csv("C:\\Users\\Samuel\\Desktop\\all_location_data.csv", index=False)
+
+print("CSV file 'all_location_data.csv' created successfully.")

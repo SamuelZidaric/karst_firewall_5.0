@@ -1,0 +1,34 @@
+import pandas as pd
+from pyproj import Transformer
+from tqdm import tqdm
+
+# Define the transformer from ESRI:102093 to EPSG:4230
+transformer = Transformer.from_crs("ESRI:102093", "EPSG:4230", always_xy=True)
+
+# Function to convert coordinates
+def convert_coordinates(easting, northing):
+    lat, lng = transformer.transform(easting, northing)
+    return lat, lng
+
+# Read the Excel file
+file_path = r'C:\Users\samuel\Desktop\my_projects\karst_firewall_5.0\files\fire_incidents_report_italy_2007_2023.xlsx'  # Change this to your file path
+df = pd.read_excel(file_path)
+
+# Apply the conversion function to the DataFrame with progress bar
+latitudes = []
+longitudes = []
+
+for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="Converting Coordinates"):
+    lat, lng = convert_coordinates(row['Coordinata Est Punto Inizio'], row['Coordinata Nord Punto Inizio'])
+    latitudes.append(lat)
+    longitudes.append(lng)
+
+# Insert the new columns right after the 'Coordinata Nord Punto Inizio' column
+df.insert(df.columns.get_loc('Coordinata Nord Punto Inizio') + 1, 'Latitude', latitudes)
+df.insert(df.columns.get_loc('Latitude') + 1, 'Longitude', longitudes)
+
+# Save the DataFrame with the new columns to a new Excel file
+output_file_path = r'C:\Users\samuel\Desktop\my_projects\karst_firewall_5.0\files\fire_incidents_report_italy_2007_2023_new.xlsx'  # Change this to your desired output file path
+df.to_excel(output_file_path, index=False)
+
+print("Conversion complete. The new file has been saved.")
